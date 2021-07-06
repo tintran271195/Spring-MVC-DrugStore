@@ -1,0 +1,27 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="frm-create">
+    <form id="frmCreateMedicine">
+        <fieldset class="row g-3">
+            <legend>Medicine information</legend>
+            <div class="col-md-6">
+                <label for="name" class="form-label">Full name</label>
+                <input type="text" class="form-control" id="name" name="name">
+            </div>
+            <div class="col-md-6">
+                <label for="unit" class="form-label">Unit</label>
+                <input type="text" class="form-control" id="unit" name="unit">
+            </div>
+            <div class="col-md-6">
+                <label for="price" class="form-label">Price</label>
+                <input type="text" class="form-control" id="price" name="price">
+            </div>
+            <div class="col-md-6">
+                <label for="category" class="form-label">Category</label>
+                <select id="category" class="form-select"></select>
+            </div>
+            <div class="col-md-12">
+                <input type="button" id="btnCreateMedicine" class="btn btn-outline-primary" value="Create medicine">
+            </div>
+        </fieldset>
+    </form>
+</th:block>

@@ -1,0 +1,15 @@
+com\codegym\service\IGeneralService.class
+com\codegym\repository\IMedicineRepository.class
+com\codegym\controller\api\MedicineAPI.class
+com\codegym\model\Category.class
+com\codegym\repository\ICategoryRepository.class
+com\codegym\service\medicine\IMedicineService.class
+com\codegym\config\AppConfig.class
+com\codegym\controller\MedicineController.class
+com\codegym\service\medicine\MedicineService.class
+com\codegym\controller\HomeController.class
+com\codegym\model\Medicine.class
+com\codegym\service\category\ICategoryService.class
+com\codegym\controller\api\CategoryAPI.class
+com\codegym\config\AppInit.class
+com\codegym\service\category\CategoryService.class

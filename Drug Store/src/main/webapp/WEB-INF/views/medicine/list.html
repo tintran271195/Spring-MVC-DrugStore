@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Medicine management</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="/resource/css/bootstrap.css">
+    <link rel="stylesheet" href="/resource/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/resource/css/sweetalert2.min.css">
+    <script type="text/javascript" src="/resource/js/sweetalert2.min.js"></script>
+    <script type="text/javascript" src="/resource/js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="/resource/js/jquery.validate-1.19.3.min.js"></script>
+    <script type="text/javascript" src="/resource/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="/resource/css/style.css">
+    <script type="text/javascript" src="/resource/js/app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="success-alert">
+
+        </div>
+        <div class="box-header">
+            <th:block th:replace="/medicine/createForm :: frm-create"></th:block>
+        </div>
+        <div class="box-body">
+            <textarea style="display:none" id="template">
+                <tr id="tr_{0}">
+                    <td>{0}</td>
+                    <td><a href="/medicine?action=view&id={0}">{1}</a></td>
+                    <td>{2}</td>
+                    <td>{3}</td>
+                    <td>{4}</td>
+                    <td>
+                        <a class="edit" data-id="{0}">
+                            <i class="fa fa-pencil-square-o fa-fw"></i>
+                            edit
+                        </a>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger delete" data-id="{0}">
+                            <i class="fa fa-trash-o"></i>
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            </textarea>
+            <input type="hidden" id="currentRow"/>
+            <table id="orderItems" class="table table-hover" border="1">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>FullName</th>
+                    <th>Unit</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <th:block th:replace="/medicine/updateForm :: frm-update"></th:block>
+
+    <script type="text/javascript" src="/resource/js/custom-validation.js"></script>
+
+    <script>
+        let page = {
+            urls: {
+                getAllMedicines: App.BASE_URL_MEDICINE,
+                getAllCategories: App.BASE_URL_CATEGORY,
+                getMedicine: App.BASE_URL_MEDICINE + '/view/',
+                saveNew: App.BASE_URL_MEDICINE,
+                saveEdit: App.BASE_URL_MEDICINE,
+                deleteMedicine: App.BASE_URL_MEDICINE
+            }
+        }
+
+        let medicine = new Medicine();
+        let template = jQuery.validator.format($.trim($("#template").val()));
+
+        let addRow = () => {
+            $("#orderItems tbody").prepend($(template(medicine.id, medicine.name, medicine.unit, medicine.price, medicine.category.name)));
+        }
+
+        function getCategories() {
+            $.ajax({
+                type: "GET",
+                url: page.urls.getAllCategories,
+            }).done((data) => {
+                $('#frmCreateMedicine').find('select').empty();
+                $('#frmUpdateMedicine').find('select').empty();
+                $.each(data, (i, item) => {
+                    $('#frmCreateMedicine').find('select').append(`<option value="${item.id}">${item.name}</option>`);
+                    $('#frmUpdateMedicine').find('select').append(`<option value="${item.id}">${item.name}</option>`);
+                });
+            }).fail(function() {
+                App.showErrorAlert("An error occurred. Please try again later !");
+            });
+        }
+
+        function getMedicines() {
+            $.ajax({
+                type: "GET",
+                url: page.urls.getAllMedicines,
+            }).done((data) => {
+                $.each(data, (i, item) => {
+                    medicine = item;
+                    addRow();
+                });
+            }).fail(function() {
+                App.showErrorAlert("An error occurred. Please try again later !");
+            });
+        }
+
+        function createMedicine() {
+            medicine.name = $("#name").val();
+            medicine.unit = $("#unit").val();
+            medicine.price = $("#price").val();
+            medicine.category = { "id": $("#category").val() };
+            delete medicine.id;
+
+            $.ajax({
+                type: "POST",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                url: page.urls.saveNew,
+                data: JSON.stringify(medicine)
+            }).done((resp) => {
+                medicine = resp;
+                addRow();
+                App.showSuccessAlert("Successful data generation !");
+            }).fail(function() {
+                App.showErrorAlert("An error occurred. Please try again later !");
+            });
+
+            $('#frmCreateMedicine')[0].reset();
+            $("#frmCreateMedicine").validate().resetForm();
+        }
+
+        function showUpdateModal() {
+            $.ajax({
+                type: "GET",
+                url: page.urls.getMedicine + medicine.id,
+                // data: { id: medicine.id },
+            }).done((resp) => {
+                assignUpdateModal(resp);
+            }).fail(function() {
+                App.showErrorAlert("An error occurred. Please try again later !");
+            });
+        }
+
+        function assignUpdateModal(c) {
+            $("#upName").val(c.name);
+            $("#upUnit").val(c.unit);
+            $("#upPrice").val(c.price);
+            $('#upCategory').val(c.category.id);
+            $('#updateModal').modal('toggle');
+        }
+
+        function updateMedicine() {
+            medicine.name = $("#upName").val();
+            medicine.unit = $("#upUnit").val();
+            medicine.price = $("#upPrice").val();
+            medicine.category = { "id": $("#upCategory").val() };
+
+            $.ajax({
+                type: "POST",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                url: page.urls.saveEdit,
+                data: JSON.stringify(medicine)
+            }).done( (resp) => {
+                medicine = resp;
+                let row = $("#orderItems tbody").find('#' + $("#currentRow").val());
+                let updated_row = $(template(medicine.id, medicine.fullName, medicine.email, medicine.phone, medicine.category.name));
+                row.replaceWith (updated_row);
+                $("#currentRow").val("");
+                $('#frmUpdateMedicine')[0].reset();
+                $("#frmUpdateMedicine").validate().resetForm();
+
+                App.showSuccessAlert("Data update successful !");
+            }).fail( () => {
+                App.showErrorAlert("An error occurred. Please try again later !");
+            });
+
+            $("#updateModal").modal('hide');
+        }
+
+        function deleteConfirm() {
+            App.showDeleteConfirmDialog()
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "DELETE",
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            // url: page.urls.deleteMedicine + "/" + medicine.id,
+                            url: page.urls.deleteMedicine,
+                            data : JSON.stringify({
+                                id : medicine.id,
+                            }) ,
+                            success() {
+                                App.showSuccessAlert("Delete data successfully!");
+                                $("#tr_" + medicine.id).remove();
+                            },
+                            error() {
+                                App.showErrorAlert("An error occurred. Please try again later!");
+                            }
+                        });
+                    }
+                });
+        }
+
+        $("#btnCreateMedicine").on("click", () => {
+            $("#frmCreateMedicine").submit();
+            // createMedicine
+        });
+
+            $("#btnUpdateMedicine").on("click", () => {
+                $("#frmUpdateMedicine").submit();
+                // updateMedicine
+            });
+
+            $("#orderItems").on("click", ".edit", function () {
+                medicine.id = $(this).data('id');
+                $("#currentRow").val($(this).closest("tr").attr("id"));
+                showUpdateModal();
+            });
+
+            $("#orderItems").on("click", ".delete", function () {
+                medicine.id = $(this).data('id');
+                deleteConfirm();
+            });
+
+            $('#updateModal').on('hidden.bs.modal', function () {
+                $('#frmUpdateMedicine')[0].reset();
+                $('#frmUpdateMedicine').validate().resetForm();
+            });
+
+            $(() => {
+                getMedicines();
+                getCategories();
+            });
+
+    </script>
+</body>
+</html>
